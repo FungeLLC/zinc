@@ -1,0 +1,58 @@
+{
+	"name": "zinc",
+	"version": "0.1.0",
+	"description": "ZINC — Zcash Inscriptions: reference library + specifications for typed, content-addressed data inside Zcash shielded memos (ZINC-1 envelope, ZINC-2 NFT profile, ZINS names) with a deterministic ZSA (ZIP 226/227) bridge.",
+	"type": "module",
+	"license": "MIT",
+	"author": "FungeLLC",
+	"homepage": "https://secresea.com",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/FungeLLC/zinc.git"
+	},
+	"keywords": [
+		"zcash",
+		"orchard",
+		"shielded",
+		"inscriptions",
+		"nft",
+		"memo",
+		"zip-302",
+		"zsa",
+		"zip-227",
+		"zinc"
+	],
+	"exports": {
+		".": "./src/index.js",
+		"./envelope": "./src/envelope.js",
+		"./collection": "./src/collection.js",
+		"./crypto": "./src/crypto.js",
+		"./zsa-bridge": "./src/zsaBridge.js",
+		"./constants": "./src/constants.js"
+	},
+	"bin": {
+		"zinc-sign-collection": "./bin/zinc-sign-collection.mjs",
+		"zinc-zsa-identity": "./bin/zinc-zsa-identity.mjs"
+	},
+	"files": [
+		"src",
+		"bin",
+		"spec",
+		"README.md",
+		"LICENSE"
+	],
+	"scripts": {
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
+	"engines": {
+		"node": ">=18"
+	},
+	"dependencies": {
+		"@noble/hashes": "^2.2.0",
+		"secp256k1": "^5.0.1"
+	},
+	"devDependencies": {
+		"vitest": "^2.1.0"
+	}
+}
