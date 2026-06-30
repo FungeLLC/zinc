@@ -307,8 +307,7 @@ give native double-spend protection. It is the correct long-term home for
 
 ## Forward-compatibility: design ZINC to bridge into ZSA
 
-To make a post-NU7 migration clean (and to look smart, not lucky), ZINC adopts
-ZSA-aligned conventions now:
+To make a post-NU7 migration clean, ZINC adopts ZSA-aligned conventions:
 
 1. **Issuer key (optional, ZSA-aligned).** A collection MAY publish an issuer
    public key in `cr` and sign collection/inscription state with it. Aligning this

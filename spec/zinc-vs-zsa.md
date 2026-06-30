@@ -5,7 +5,7 @@ Forum-/ZIP-discussion-ready.*
 
 People will (rightly) ask: **"Zcash already has Zcash Shielded Assets (ZSA,
 ZIP 226/227), which support NFTs natively — why build memo-based inscriptions
-instead?"** This document answers that without spin. Short version:
+instead?"** This document answers that directly. Short version:
 
 > **ZSA is the better technology for native, ownable, supply-audited *assets*, and
 > it is the destination.** ZINC is the **available-today, any-wallet,
@@ -48,7 +48,7 @@ instead?"** This document answers that without spin. Short version:
 | **Complexity / risk** | New circuit, hard fork, audits | No consensus change; cheap to implement & audit |
 | **Bridging out** | Native burn-to-bridge | Via ZSA once NU7 lands (by construction) |
 
-## Where ZSA is simply better (no spin)
+## Where ZSA is simply better
 
 1. **Real ownership & double-spend protection.** This is the one place ZINC's
    launch model is weakest (advisory). ZSA gets it for free from nullifiers.
@@ -86,32 +86,32 @@ replace it.
 - **Composability:** ZINC fills ZSA's metadata/registry gap, so the "simple" layer
   is *durably* useful, not a stopgap that ZSA deletes.
 
-## What we ARE adopting from ZSA (the "let's make a better decision" part)
+## What ZINC adopts from ZSA
 
-Reading ZIP 227 surfaced concrete, low-risk improvements. These are now
+Reading ZIP 227 surfaced concrete, low-risk improvements. These are
 **implemented** — the standard-level pieces in this reference library, the
 deployment-level enforcement in the live marketplace:
 
 1. **`final` supply lock** — mirrors ZSA's `finalize`: an irreversible, *signed*
    collection record (`final:1`) that closes supply (e.g. "1024 Privacy Punks,
    locked"), making the cap cryptographically credible pre-NU7 and 1:1 with ZSA
-   finalisation. *Shipped (library):* the flag is folded into the signed
+   finalisation. *Implemented (library):* the flag is folded into the signed
    `nfpt_collection` canonical payload in [`../src/collection.js`](../src/collection.js)
-   so stripping or forging it breaks the signature. *Shipped (deployment):* an
+   so stripping or forging it breaks the signature. *Implemented (deployment):* an
    irreversible latch on ingest and enforcement on every mint path.
 2. **ZSA-aligned issuer key** — the collection owner key *is* the issuer key. Its
    x-only form (the 32-byte X coordinate of the compressed secp256k1 key) is
    exactly the BIP-340 key ZSA issuance uses, so the *same key* can later issue the
-   matching ZSA asset. *Shipped:* `deriveZsaIssuer()` in
+   matching ZSA asset. *Implemented:* `deriveZsaIssuer()` in
    [`../src/zsaBridge.js`](../src/zsaBridge.js).
 3. **Bridge-by-construction identity** — canonical `asset_desc = "ZINC-2|<registry>|<cid>"`,
    so post-NU7 the ZSA `AssetId`/`AssetDigest` are deterministic from the original
-   inscription. *Shipped:* `deriveZsaAssetIdentity()` in
+   inscription. *Implemented:* `deriveZsaAssetIdentity()` in
    [`../src/zsaBridge.js`](../src/zsaBridge.js) (+ the `zinc-zsa-identity` CLI),
    with hashes cross-checked against an independent BLAKE2b in the test suite.
-4. **Target ZSA as "Model C".** Our roadmap's note-bound NFT (Model C) is exactly
-   what OrchardZSA already does. So we **stop planning a bespoke note-binding** and
-   instead make ZSA the note-bound endgame (lands with NU7).
+4. **Target ZSA as "Model C".** The roadmap's note-bound NFT (Model C) is exactly
+   what OrchardZSA already does, so ZSA **is** the note-bound endgame rather than a
+   bespoke note-binding (lands with NU7).
 
 ## Migration / bridge plan (today → NU7)
 
@@ -127,9 +127,8 @@ Phase C (post-NU7)   Issue/upgrade tokens as ZSA assets (note-bound, native cust
 
 ## Bottom line
 
-We are not pretending ZINC out-engineers ZSA. We are saying: **ZSA is the
-destination for native assets; ZINC is the road that's open today, the general
-inscription layer ZSA doesn't cover, and the metadata/registry layer ZSA needs.**
-Choosing the simple, deployable design — and explicitly engineering the bridge into
-ZSA — is the responsible call, and it's how we support the chain rather than wing
-it.
+ZINC does not out-engineer ZSA. **ZSA is the destination for native assets; ZINC
+is the road that's open today, the general inscription layer ZSA doesn't cover, and
+the metadata/registry layer ZSA needs.** Choosing the simple, deployable design —
+and explicitly engineering the bridge into ZSA — is a deliberate engineering
+decision.
