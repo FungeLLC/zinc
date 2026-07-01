@@ -1,7 +1,7 @@
 {
-	"name": "zinc",
+	"name": "@fungellc/zinc",
 	"version": "0.1.0",
-	"description": "ZINC — Zcash Inscriptions: reference library + specifications for typed, content-addressed data inside Zcash shielded memos (ZINC-1 envelope, ZINC-2 NFT profile, ZINS names) with a deterministic ZSA (ZIP 226/227) bridge.",
+	"description": "ZINC — Zcash Inscriptions: reference library + specifications for typed, content-addressed data inside Zcash shielded memos (ZINC-1 envelope, ZINC-2 NFT profile, ZINC-3 Zones) with a deterministic ZSA (ZIP 226/227) bridge.",
 	"type": "module",
 	"license": "MIT",
 	"author": "FungeLLC",

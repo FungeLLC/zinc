@@ -3,7 +3,7 @@
 **ZINC (Zcash INsCriptions)** is an open, application-layer standard for inscribing
 typed, content-addressed data inside Zcash **shielded** transactions, using the
 encrypted memo as the carrier. Inscriptions are general; **NFTs are one profile,
-names are another**.
+DNS zones are another**.
 
 This repository is the **standard + its MIT-licensed reference library**:
 
@@ -11,7 +11,7 @@ This repository is the **standard + its MIT-licensed reference library**:
 | --- | --- |
 | **ZINC-1** | The inscription **envelope** — a ZIP-302 text-memo profile (`t:<type>` + `key:value` records, ≤ 512 bytes). |
 | **ZINC-2** | The **non-fungible token** profile (the shielded analogue of ERC-721). On-chain tag `t:nfpt` for wire-compatibility. |
-| **ZINS** | The **name-service** profile (ZINC-3); pairs with ZNS (DNS ↔ inscription). Informative here. |
+| **ZINC-3 "Zones"** | The **shielded DNS zones** profile — anchors complete DNS zones (not vanity names) to on-chain inscriptions. Informative here. |
 
 Runs on the protocol deployed **today** — no consensus change — and is engineered
 to **bridge to native Zcash Shielded Assets (ZSA, ZIP 226/227) after NU7**.
@@ -24,8 +24,11 @@ to **bridge to native Zcash Shielded Assets (ZSA, ZIP 226/227) after NU7**.
 ## Install
 
 ```bash
-npm install zinc
+npm install @fungellc/zinc
 ```
+
+(The bare `zinc` name on npm belongs to an unrelated package, so the library
+ships under the `@fungellc` scope.)
 
 Requires Node.js ≥ 18. Dependencies: [`secp256k1`](https://www.npmjs.com/package/secp256k1)
 (ECDSA — the exact primitive the live deployment uses, so signatures are
@@ -40,7 +43,7 @@ import {
 	buildSignedCollectionMemo,                  // ZINC-2 signed collection metadata
 	deriveZsaAssetIdentity,                     // ZSA (ZIP 226/227) bridge identity
 	NFPT_TYPES
-} from 'zinc'
+} from '@fungellc/zinc'
 
 // ZINC-1: build and parse an inscription envelope (≤ 512 bytes, UTF-8).
 const memo = createMemo({ t: NFPT_TYPES.INSCRIPTION, c: 'ipfs://Qm…', n: 'Cat #1' })
@@ -60,8 +63,9 @@ const id = deriveZsaAssetIdentity({
 console.log(id.asset_digest)
 ```
 
-Subpath exports are also available: `zinc/envelope`, `zinc/collection`,
-`zinc/crypto`, `zinc/zsa-bridge`, `zinc/constants`.
+Subpath exports are also available: `@fungellc/zinc/envelope`,
+`@fungellc/zinc/collection`, `@fungellc/zinc/crypto`,
+`@fungellc/zinc/zsa-bridge`, `@fungellc/zinc/constants`.
 
 ## CLI tools
 
@@ -103,7 +107,8 @@ the live deployment and vice versa.
 npm test
 ```
 
-52 tests cover the envelope, the collection signing scheme (incl. the `final`
+57 tests cover the envelope (including the parser-differential and
+delimiter-injection guards), the collection signing scheme (incl. the `final`
 supply lock), the crypto primitives, and the ZSA bridge identity (hashes
 cross-checked against an independent BLAKE2b).
 

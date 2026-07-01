@@ -47,8 +47,30 @@ describe('envelope', () => {
 				.toThrow(/Memo too large/)
 		})
 
+		test('measures the limit in UTF-8 bytes, not UTF-16 code units', () => {
+			// 200 × '€' is 200 JS chars but 600 UTF-8 bytes: over the limit.
+			expect(() => createMemo({ t: NFPT_TYPES.INSCRIPTION, d: '\u20AC'.repeat(200) }))
+				.toThrow(/Memo too large/)
+			// 100 × '€' (300 bytes) + envelope overhead fits.
+			expect(() => createMemo({ t: NFPT_TYPES.INSCRIPTION, d: '\u20AC'.repeat(100) }))
+				.not.toThrow()
+		})
+
+		test('rejects keys outside the lowercase a-z / 0-9 / underscore grammar', () => {
+			expect(() => createMemo({ t: 'nfpt', 'Bad-Key': 'x' })).toThrow(/Invalid memo key/)
+			expect(() => createMemo({ t: 'nfpt', UPPER: 'x' })).toThrow(/Invalid memo key/)
+		})
+
+		test('rejects carriage returns inside values', () => {
+			expect(() => createMemo({ t: 'nfpt', n: 'a\rb' })).toThrow(/newlines/)
+		})
+
 		test('parseMemo splits on the first colon only', () => {
 			expect(parseMemo('t:nfpt\nc:ipfs://abc:def')).toEqual({ t: 'nfpt', c: 'ipfs://abc:def' })
+		})
+
+		test('parseMemo rejects duplicate keys (parser-differential guard)', () => {
+			expect(() => parseMemo('t:nfpt_list\np:1.0\np:99.0')).toThrow(/Duplicate key/)
 		})
 	})
 
@@ -115,6 +137,10 @@ describe('envelope', () => {
 		test('generateSignatureData joins c|f|n|d[|ts]', () => {
 			expect(generateSignatureData({ c: 'C', f: 'json', n: 'N', d: 'D' })).toBe('C|json|N|D')
 			expect(generateSignatureData({ c: 'C', f: 'json', n: 'N', d: 'D', ts: '123' })).toBe('C|json|N|D|123')
+		})
+
+		test('generateSignatureData refuses "|" inside signed fields (delimiter injection)', () => {
+			expect(() => generateSignatureData({ c: 'C', n: 'evil|name', d: 'D' })).toThrow(/delimiter/)
 		})
 
 		test('getMemoSize counts UTF-8 bytes', () => {

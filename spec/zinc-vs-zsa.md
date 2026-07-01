@@ -44,7 +44,7 @@ instead?"** This document answers that directly. Short version:
 | **Ownership / double-spend** | **Native** (note-bound, nullifiers) | **Advisory** today → reveal-once → note-bound/ZSA |
 | **Supply auditability** | **Strong** (global issuance state, `finalize`) | Weak (registry/indexer convention; optional `final`) |
 | **Metadata** | **None** (hash + off-chain lookup required) | **Rich, content-addressed** (IPFS) — the layer ZSA needs |
-| **Scope** | **Assets only** (fungible + NFT) | **General**: NFTs, names (ZINS), messages, files, attestations |
+| **Scope** | **Assets only** (fungible + NFT) | **General**: NFTs, DNS zones (ZINC-3), messages, files, attestations |
 | **Complexity / risk** | New circuit, hard fork, audits | No consensus change; cheap to implement & audit |
 | **Bridging out** | Native burn-to-bridge | Via ZSA once NU7 lands (by construction) |
 
@@ -72,8 +72,8 @@ replace it.
 4. **Rich metadata that ZSA lacks.** ZSA explicitly punts metadata to an off-chain
    "trusted registry"/petname layer. ZINC *is* that layer (registry + IPFS), so it
    stays useful even after ZSA ships.
-5. **General-purpose.** Names (ZINS), messages, file inscriptions and attestations
-   are out of scope for ZSA but natural for ZINC.
+5. **General-purpose.** DNS zones (ZINC-3), messages, file inscriptions and
+   attestations are out of scope for ZSA but natural for ZINC.
 6. **Low risk / low cost.** No hard fork, no proving-system work, easy to audit.
 
 ## Why "choose simple" is the smart call here

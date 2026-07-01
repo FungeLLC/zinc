@@ -2,7 +2,7 @@
 ZINC ("Zcash INsCriptions") is the WORKING DESIGNATION for this family of
 application-layer standards. It is intended to be submitted into the official
 zcash/zips process, where the ZIP editors assign formal ZIP number(s). "ZINC-1",
-"ZINC-2", "ZINS" etc. are self-describing codenames for the parts of the family,
+"ZINC-2", "ZINC-3" etc. are self-describing codenames for the parts of the family,
 not a claim to a parallel official Zcash series. Written in the zcash/zips house
 style so it can be opened as a Discussion / Pull Request at
 https://github.com/zcash/zips when ready.
@@ -28,7 +28,7 @@ Family: ZINC (Zcash INsCriptions)  [working designation; ZIP number(s) assigned 
 Parts:
   ZINC-1  Inscription Envelope          (general-purpose base layer)
   ZINC-2  Non-Fungible Token profile    (the Zcash-native analogue of ERC-721)
-  ZINS    Name-Service profile          (ZINC-3; "ZINS" pairs with ZNS) — informative here
+  ZINC-3  Shielded DNS Zones profile    ("ZINC Zones") — informative here
 Owners: FungeLLC <https://github.com/FungeLLC>
 Status: Pre-Proposal / Draft
 Category: Standards / Applications / Wallet
@@ -48,7 +48,7 @@ only when, they appear in all capitals.
   typed payload by reference to (or inclusion of) content.
 - **Envelope (ZINC-1)**: the shared memo format that carries every inscription.
 - **Profile**: a concrete inscription type built on the envelope (ZINC-2 NFTs,
-  ZINS names, …).
+  ZINC-3 DNS zones, …).
 - **Registry**: a Zcash address (Unified Address or shielded address) plus its
   Unified Full Viewing Key (UFVK), used as the public *inbox* for inscriptions of
   a given application or collection.
@@ -96,8 +96,10 @@ A conforming implementation:
 
 The memo body is newline-separated (`\n`, `0x0A`) records. Each record is
 `key:value`, split on the **first** colon only. Keys are lower-case ASCII +
-underscore. Values MUST NOT contain `\n`. Rich/multi-line content lives in the
-referenced content document, never in the memo.
+underscore. Values MUST NOT contain `\n`. A key MUST NOT appear more than once;
+parsers MUST reject a memo with duplicate keys (see Security Considerations).
+The 512-byte limit is measured in UTF-8 **bytes**. Rich/multi-line content
+lives in the referenced content document, never in the memo.
 
 ```
 field    = key ":" value
@@ -277,6 +279,41 @@ CID is resolved:
   first listing. Direct-to-recipient transfers are mandated for the privacy path.
 - **Listings privacy.** Listings SHOULD use a dedicated ZIP 32 sub-account inbox
   and MAY seal price/CID with X25519 + AES-256-GCM off-chain.
+- **Marketplace payment routing.** Where an indexer exposes a "prepare purchase"
+  service that tells buyers where to send ZEC, the payout address MUST be pinned
+  when the listing is recorded (after whatever owner check the indexer applies)
+  and MUST NOT track later ownership-claim updates — otherwise a fabricated
+  transfer claim redirects buyer funds. Recording a transfer for a listed token
+  MUST void the listing.
+- **Parser strictness (parser differentials).** Conforming parsers MUST reject a
+  memo containing duplicate keys, and writers MUST emit keys matching
+  `[a-z][a-z0-9_]*` only. Two parsers disagreeing on which duplicate "wins"
+  (first vs last) can be steered to read different prices or CIDs out of the
+  same memo. The 512-byte limit is measured in **UTF-8 bytes**, not UTF-16 code
+  units — a subtle bug class in JavaScript implementations.
+- **Signature scope and delimiter injection.** The optional inscription
+  signature `sg` binds `c|f|n|d[|ts]` only. It therefore asserts **content
+  authorship**, not context: it does not bind the type tag, the registry or the
+  collection, so a valid `sg` can be replayed in a different context. Verifiers
+  MUST NOT infer registry/collection endorsement from `sg` alone. Because the
+  canonical string is pipe-delimited, signers and verifiers MUST reject a
+  literal `|` inside any signed field (otherwise two different payloads can
+  share one signature). A future signed-payload revision SHOULD add a domain
+  tag and bind `t` + registry.
+- **Collection-update replay.** The `nfpt_collection` canonical payload binds
+  the slug and a monotonic `nce`, but not the registry inbox; the same signed
+  update is valid at any registry that trusts the same `cr`. Indexers SHOULD
+  scope collection state per registry and always apply the highest-`nce` rule
+  within that scope.
+- **Registry inbox is a public mailbox.** Anyone can send an inscription to a
+  published registry address (that is the point), so indexers MUST treat inbox
+  contents as untrusted input: enforce first-inscription-wins for a
+  `(registry, cid)` collision, apply size/rate limits, and never execute or
+  trust fetched metadata.
+- **IPFS fetch hygiene.** Metadata documents are attacker-supplied input.
+  Fetchers SHOULD cap document size, apply timeouts, validate the document
+  against the expected schema, treat embedded URLs as untrusted, and verify the
+  fetched bytes hash to the CID (the CID is the integrity proof — use it).
 - **Metadata availability.** IPFS content MUST be pinned; loss of pinning yields
   an unresolvable (but still provably-inscribed) token.
 
@@ -302,7 +339,7 @@ give native double-spend protection. It is the correct long-term home for
   known assets" / petname files (ZIP 227 §Hash of the asset description). **ZINC's
   registry + content-addressed IPFS metadata is exactly that missing layer** — and
   remains useful *even alongside* ZSA.
-- **ZSA is assets-only. ZINC is general** (NFTs, names/ZINS, messages, files,
+- **ZSA is assets-only. ZINC is general** (NFTs, DNS zones, messages, files,
   attestations).
 
 ## Forward-compatibility: design ZINC to bridge into ZSA
@@ -346,14 +383,22 @@ registry layer throughout.
 
 ZINC-1 is deliberately broader than NFTs. Further profiles (each a new `t:` tag):
 
-- **ZINS — Name Service (ZINC-3).** Shielded name→pointer bindings; pairs with the
-  platform's ZNS bridge (DNS ↔ inscription). The friendly name "ZINS" echoes ZNS.
+- **ZINC Zones — Shielded DNS Zones (ZINC-3).** Anchors *complete DNS zones* to
+  shielded inscriptions: a domain publishes a `_zns.<domain>` TXT record whose
+  hash commitment is verified against an on-chain `zns_zone` memo, giving the
+  zone a censorship-resistant, privately-updatable source of truth. This is
+  infrastructure for decentralised, private *proper DNS* — resolution of real
+  domains with full record sets — **not** a vanity-name registry. (It is
+  unrelated to "ZNS" by ZcashNames, which maps human-readable names to Zcash
+  addresses; the `zns_zone` / `_zns` wire tags here predate that project's
+  public naming and are kept for compatibility with records already on
+  mainnet.)
 - **Messages / notices** — typed memos beyond free-text payments.
 - **File inscriptions** — arbitrary content-addressed documents, chunked across
   multiple memos when larger than 512 bytes.
 - **Attestations / receipts** — signed, content-addressed claims.
 
-Only ZINC-1 and ZINC-2 are specified normatively here; ZINS and the rest are
+Only ZINC-1 and ZINC-2 are specified normatively here; ZINC-3 and the rest are
 listed to show the envelope's range.
 
 ## Reference Implementation

@@ -4,7 +4,7 @@ Thanks for your interest in **ZINC** (Zcash INsCriptions). This repository holds
 two related things, and how you contribute depends on which one you're touching:
 
 1. **The standard** — the normative specifications in [`spec/`](spec/)
-   (`zinc-shielded-inscriptions.md` for ZINC‑1/ZINC‑2/ZINS, and `zinc-vs-zsa.md`
+   (`zinc-shielded-inscriptions.md` for ZINC‑1/ZINC‑2/ZINC‑3, and `zinc-vs-zsa.md`
    for the design rationale against Zcash Shielded Assets).
 2. **The reference library** — the MIT‑licensed JavaScript implementation in
    [`src/`](src/), its CLIs in [`bin/`](bin/), and its tests in [`test/`](test/).

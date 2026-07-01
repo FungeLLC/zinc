@@ -63,6 +63,11 @@ export const decodeScannerMemo = (rawMemo) => {
 	return memoText.replace(/\0+$/, '').trim();
 };
 
+// ZINC-1 key grammar: lowercase ASCII letters, digits and underscore,
+// starting with a letter. Enforced at write time so a conforming producer
+// can never emit a memo that different parsers read differently.
+const KEY_RE = /^[a-z][a-z0-9_]*$/;
+
 /**
  * Serialise a memo-data object into the canonical envelope string.
  * @param {object} memoData - Field map; `t` MUST be present for a valid memo.
@@ -72,8 +77,11 @@ export const createMemo = (memoData) => {
 	const fields = [];
 	for (const [key, value] of Object.entries(memoData)) {
 		if (value !== undefined && value !== null && value !== '') {
+			if (!KEY_RE.test(key)) {
+				throw new Error(`Invalid memo key '${key}' (keys are lowercase ASCII letters, digits, underscore)`);
+			}
 			const valueStr = String(value);
-			if (valueStr.includes('\n')) {
+			if (/[\r\n]/.test(valueStr)) {
 				throw new Error(`Field '${key}' cannot contain newlines`);
 			}
 			if (key !== 't' && valueStr.includes(':')) {
@@ -87,15 +95,22 @@ export const createMemo = (memoData) => {
 		}
 	}
 	const memo = fields.join('\n');
-	if (memo.length > VALIDATION_LIMITS.MEMO_MAX_SIZE) {
-		throw new Error(`Memo too large: ${memo.length} bytes (max ${VALIDATION_LIMITS.MEMO_MAX_SIZE})`);
+	// ZIP-302 limits the memo to 512 BYTES of UTF-8; `memo.length` counts
+	// UTF-16 code units and undercounts multibyte characters, so measure
+	// with Buffer.byteLength.
+	const memoBytes = Buffer.byteLength(memo, 'utf8');
+	if (memoBytes > VALIDATION_LIMITS.MEMO_MAX_SIZE) {
+		throw new Error(`Memo too large: ${memoBytes} bytes (max ${VALIDATION_LIMITS.MEMO_MAX_SIZE})`);
 	}
 	return memo;
 };
 
 /**
  * Parse an envelope string into a field map. Splits each line on the FIRST
- * colon only, so values may contain further colons.
+ * colon only, so values may contain further colons. Duplicate keys are
+ * rejected: silently letting the last (or first) occurrence win invites
+ * parser-differential attacks where two implementations read different
+ * prices/CIDs out of one memo.
  * @param {string} memo
  * @returns {object}
  */
@@ -114,6 +129,9 @@ export const parseMemo = (memo) => {
 		const value = line.substring(colonIndex + 1);
 		if (!key) {
 			throw new Error(`Empty key in line: ${line}`);
+		}
+		if (Object.prototype.hasOwnProperty.call(result, key)) {
+			throw new Error(`Duplicate key in memo: ${key}`);
 		}
 		result[key] = value;
 	}
@@ -269,6 +287,10 @@ export const validateMemo = (memoData, expectedType = null) => {
 
 /**
  * Build the data string signed by ZINC-2 inscription `sg`: `c|f|n|d[|ts]`.
+ *
+ * A literal `|` inside any signed field would shift the remaining fields
+ * along the canonical string, letting two different payloads share one
+ * signature — so such input is refused at both sign and verify time.
  * @param {object} memoData
  * @returns {string}
  */
@@ -281,6 +303,11 @@ export const generateSignatureData = (memoData) => {
 	];
 	if (memoData.ts) {
 		parts.push(memoData.ts);
+	}
+	for (const part of parts) {
+		if (String(part).includes('|')) {
+			throw new Error('Signed fields must not contain the "|" delimiter');
+		}
 	}
 	return parts.join('|');
 };
