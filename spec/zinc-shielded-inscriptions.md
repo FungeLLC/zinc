@@ -393,13 +393,31 @@ ZINC-1 is deliberately broader than NFTs. Further profiles (each a new `t:` tag)
   names to Zcash addresses. Zones bound before the ZINC naming used
   `_zns.<domain>` TXT records and `zns_zone` / `zns_nfpt` memos; resolvers
   keep accepting those legacy tags because inscribed memos are immutable.)
+- **EVM Bridge (ZINC-4, draft).** Makes inscriptions *privacy-optional* — a
+  category neither public-chain NFTs (public history is irreversible) nor ZSA
+  (no EVM representation) covers: hold privately on Zcash, surface as a
+  wrapped ERC-721 while liquidity/composability is wanted, burn to unwrap
+  back to a shielded address — where the public trail ends. A
+  `t:nfpt_bridge_out` memo parks the inscription with the bridge custodian;
+  the wrapped token id is `uint256(sha256(asset_desc))` — the same
+  `"ZINC-2|<registry>|<cid>"` preimage as the ZSA bridge identity, so
+  inscription, wrapped token and future native asset are mutually derivable.
+  The custody trust is stated plainly and made auditable by construction:
+  publishing the custody inbox's viewing key is a proof of reserve.
+- **Sealed-bid auctions (ZINC-2 extension, draft).** `t:nfpt_bid`: bids are
+  shielded memos to the listing inbox; losing bids are never revealed to
+  anyone but the auctioneer.
+- **Non-transferable credentials (ZINC-2 extension, draft).** `soulbound:1`
+  on the mint memo; conforming indexers refuse transfer records. Unlike
+  public-chain soulbound tokens, holders are not publicly enumerable.
 - **Messages / notices** — typed memos beyond free-text payments.
 - **File inscriptions** — arbitrary content-addressed documents, chunked across
   multiple memos when larger than 512 bytes.
 - **Attestations / receipts** — signed, content-addressed claims.
 
 Only ZINC-1 and ZINC-2 are specified normatively here; ZINC-3 and the rest are
-listed to show the envelope's range.
+listed to show the envelope's range. The `nfpt_bridge_out` and `nfpt_bid`
+tags are **reserved** by their drafts and MUST NOT be repurposed.
 
 ## Reference Implementation
 
