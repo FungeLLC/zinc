@@ -384,15 +384,15 @@ registry layer throughout.
 ZINC-1 is deliberately broader than NFTs. Further profiles (each a new `t:` tag):
 
 - **ZINC Zones — Shielded DNS Zones (ZINC-3).** Anchors *complete DNS zones* to
-  shielded inscriptions: a domain publishes a `_zns.<domain>` TXT record whose
-  hash commitment is verified against an on-chain `zns_zone` memo, giving the
-  zone a censorship-resistant, privately-updatable source of truth. This is
-  infrastructure for decentralised, private *proper DNS* — resolution of real
-  domains with full record sets — **not** a vanity-name registry. (It is
-  unrelated to "ZNS" by ZcashNames, which maps human-readable names to Zcash
-  addresses; the `zns_zone` / `_zns` wire tags here predate that project's
-  public naming and are kept for compatibility with records already on
-  mainnet.)
+  shielded inscriptions: a domain publishes a `_zinc.<domain>` TXT record whose
+  hash commitment is verified against an on-chain `t:zone` (or `t:zone_nfpt`)
+  memo, giving the zone a censorship-resistant, privately-updatable source of
+  truth. This is infrastructure for decentralised, private *proper DNS* —
+  resolution of real domains with full record sets — **not** a vanity-name
+  registry. (It is unrelated to "ZNS" by ZcashNames, which maps human-readable
+  names to Zcash addresses. Zones bound before the ZINC naming used
+  `_zns.<domain>` TXT records and `zns_zone` / `zns_nfpt` memos; resolvers
+  keep accepting those legacy tags because inscribed memos are immutable.)
 - **Messages / notices** — typed memos beyond free-text payments.
 - **File inscriptions** — arbitrary content-addressed documents, chunked across
   multiple memos when larger than 512 bytes.
